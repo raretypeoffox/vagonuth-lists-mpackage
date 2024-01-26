@@ -30,7 +30,7 @@ function InventoryList.Load()
   end
 end
 
-if TableSize(InventoryList.Items) == 0 then InventoryList.Load() end
+if TableSize(InventoryList.Items) <= 1 then InventoryList.Load() end
 sendGMCP("Char.Group.List")
 sendGMCP("Char.Status")
 sendGMCP("Char.Vitals")
