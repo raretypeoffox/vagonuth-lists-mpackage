@@ -1,0 +1,16 @@
+-- Vagonuth AVATAR Package Change Log
+
+-- v1.0.6
+-- added repinsig
+
+-- v1.0.7
+-- added README, CHANGELOG
+-- changed data structure: bags are now tracked by unique ID in InventoryList.Items
+-- added: isearchlvl, icountlvl
+-- added: replocker
+-- updated: ihelp
+
+
+
+
+

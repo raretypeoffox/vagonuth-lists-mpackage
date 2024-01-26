@@ -1,0 +1,56 @@
+-- Vagonuth Inventory Package for AVATAR MUD (avatar.outland.org:3000)
+-- Note: could be easily modified for any MUD that supports GMCP's Char.Items.List format
+-- README FILE
+
+-- This is a standalone module that can be installed in Mudlet to help track your inventory and alleg
+-- For the latest, check out the github: https://github.com/raretypeoffox/vagonuth-lists-mpackage/wiki
+
+-- The package will track a variety of information about your character including:
+
+-- Tracks:
+-- + Each characters inventory, items in bags and your lockers
+-- + Alleg item request + status with Alleg
+-- + QP, gold, insigs
+-- + Character stats: race, class, hp, mana, level, etc. (note: no reports for these)
+-- + Character worship status
+
+-- Doesn't track:
+-- - Currently equipped items
+-- - Bags within Bags
+-- - Bags with too many items in it (gmcp limit, will give you error)
+
+-- Opportunities (easy to implement):
+-- + Write a report showing all characters, showing characters by most hp, most mana, chars that need to regen, etc.
+-- + Write a report showing # of all alleg items you have
+
+
+-- *** Information for Coders ***
+
+-- Key Data Structures
+
+-- InventoryList.Items - the parent table where everything is saved
+-- InventoryList.Items["chararacter"] -- the parent table for that particular character's items
+-- InventoryList.Items["chararacter"].locker -- contents of character's locker
+-- InventoryList.Items._BagNames -- lookup tables for converting unique id's to bag names
+
+-- AltList.Chars -- the parent table where all the character stats are saved
+-- AltList.Chars["character"] -- the parent table for that particular character's stats
+-- AltList.Chars["character"].Alleg -- table for that character's alleg info
+
+-- Key Functions
+
+-- InventoryList.UpdateItems() -- updates the inventory list
+-- InventoryList.Search(tbl, search) -- used to search for an item in the inventory list, returns a table while all matching items
+
+-- AltList.UpdateVitals() -- updates character vitals from gmcp
+-- AltList.UpdateXXX()  -- variety of other functions that update
+
+-- Supporting Scripts
+
+-- Insig Script -- parses the "insig" trigger text into the insig table
+-- Alleg Script -- converts alleg items to keywords, checks if a looted item is alleg
+-- Time Functions -- calculates the time zone we're in
+-- Help functions -- misc helper functions
+-- wait script -- allows use to use the wait command (needed for inventory update)
+
+
