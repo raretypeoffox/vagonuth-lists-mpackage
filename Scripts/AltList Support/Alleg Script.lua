@@ -417,7 +417,8 @@ local AllegItems = {
     {
         clue = "Though the item would make one think otherwise, I would be eternally happy if you were to gather a clasp for me.",
         plane = "Fire",
-        item = "Clasp Of Eternal Anguish"
+        item = "Clasp Of Eternal Anguish",
+        keyword = "clasp anguish lordgear"
     },
     {
         clue = "Thy task involves an axe. Four shalt thou not count, neither count thou two.",
@@ -568,10 +569,15 @@ function getAllegKeyword(item)
  item = string.gsub(item, " small ", " ")
  item = string.gsub(item, " called ", " ")
  item = string.gsub(item, " pair ", " ")
+ item = string.gsub(item, " heavy ", "")
  item = string.gsub(item, "broadsword", "broad sword")
  item = string.gsub(item, "shard%-embedded", "shard")
  item = string.gsub(item, "devilish", "devil")
+ item = string.gsub(item, "seething", "blaze")
+ item = string.gsub(item, "blueish", "bluish")
+ item = string.gsub(item, "eternal anguish", "anguish")
  item = string.gsub(item, "%'s", "")
+ item = string.gsub(item, "'", "")
  --item = string.gsub(item, " -", " ")
  item = string.gsub(item, '^%s*(.-)%s*$', '%1')
  return item

@@ -21,12 +21,17 @@ if AltList.GivenAllegRuby then
   --print("DEBUG: Alleg Lookup (" .. matches.clue .. ")")
   
   if item and item_plane then
-    print("\nAlleg's request: " .. item .. " (" .. item_plane .. ")")
+    printMessage("\nAlleg's request", item .. " (" .. item_plane .. ")", "yellow", "white")
+    
+    printGameMessage("Alleg's request", item .. " (" .. AltList.GetCharName() .. ")", "yellow")
     AltList.AllegRecordRequest(item)
     AltList.GivenAllegRuby = false
     
     if not InventoryList.SearchReport(item) then
      --print("Not found, consider giving up?")
     end
+    
+    AltList.ReportNextAvailableAlleg()
+    raiseEvent("AllegRecordRequest")
   end
  end

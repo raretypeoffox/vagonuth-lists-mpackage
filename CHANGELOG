@@ -10,6 +10,18 @@
 -- added: replocker
 -- updated: ihelp
 
+-- v1.0.8 (October 31, 2024)
+-- added: run-venison (quick command to turn-in venison)
+-- added: qp updates when using qp transfer now
+-- added: repinvr (reverse inventory report)
+-- added: turninvault (auto turnin treasure hunter items)
+-- added: movevault (move treasure hunter items between bags)
+-- updated: repvault <charname> available now, repvault shows who has an item
+-- updated inventory count in Vagonuth lottobot pinfo
+-- updated: repalleg now show who has an item and how many your have
+-- bug fix: preventing legend from overwriting lord inventory/altlist
+-- bug fix: heavy shroud keyword fixed
+
 
 
 

@@ -3,8 +3,9 @@
 
 
 -- Trigger Patterns:
--- 0 (regex): ^ ?\b\d{1,2}\b\.? (\*|\+|\-|\$|\@)? ?(?<item>.+?)(?:\s+\(\d+\))?$
--- 1 (regex): ^#\d+ \(x\d+\) (?<item>.*)
+-- 0 (regex): ^#\d+ \(x\d+\) (?<item>.*)$
+-- 1 (regex): ^\d+. \(x\d+\)  (?<item>.*)$
+-- 2 (regex): ^ ?\b\d{1,2}\b\.? (\*|\+|\-|\$|\@)? ?(?<item>.+?)(?:\s+\(\d+\))?$
 
 -- Script Code:
 -- Zaffer's format:
@@ -12,7 +13,7 @@
 -- Hydro's format:
 -- 2. a sandblasted emerald
 
---print(matches[1])
+
 
 local items_owned = 0
 items_owned = InventoryList.ItemsOnHand(matches.item)
@@ -20,7 +21,7 @@ items_owned = InventoryList.ItemsOnHand(matches.item)
 
 if items_owned > 0 then
   deleteLine()
-  cecho("<ansi_yellow>" .. matches[1] .. " " .. "<yellow>[Owned: " .. items_owned .. "]\n")
+  cecho("\n<ansi_yellow>" .. matches[1] .. " " .. "<yellow>[Owned: " .. items_owned .. "]\n")
   cecho("\n")
 --else
   --cecho("<ansi_yellow>" .. line .. "\n")

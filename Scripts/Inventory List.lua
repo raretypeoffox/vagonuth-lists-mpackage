@@ -80,7 +80,7 @@ end
 InventoryList.UpdateItemsLock = InventoryList.UpdateItemsLock or false
 function InventoryList.UpdateItems(loc_type, echo, ...)
   if not Connected() then return end
-  if gmcp.Char and gmcp.Char.Status and gmcp.Char.Status.level and tonumber(gmcp.Char.Status.level) == 250 then
+  if gmcp.Char and gmcp.Char.Status and gmcp.Char.Status.level and tonumber(gmcp.Char.Status.level) > 125 then
     if echo then cecho("<red>Inventory Manager doesn't track legendary items\n") end
     return
   end
@@ -164,6 +164,7 @@ function InventoryList.UpdateItems(loc_type, echo, ...)
 end
 
 function InventoryList.Search(tbl, search)
+  assert(type(search)=="string")
   search = string.lower(search)
   local locations = {}
   for k, v in pairs(tbl) do
@@ -228,7 +229,7 @@ function InventoryList.QuickSearch(str)
   local report = InventoryList.Search(InventoryList.Items, str)
   
   if #report == 0 then return "" end
-  
+
   return report[1][1]
 end
 
@@ -305,7 +306,7 @@ function InventoryList.ReportLockers()
   local total = 0
   local name_list = {}
   for name, _ in pairs(InventoryList.Items) do
-    if InventoryList.Items[name].locker then
+    if InventoryList.Items[name].locker and #InventoryList.Items[name].locker > 0 then
       table.insert(name_list, name)
       total = total + 1
     end
@@ -355,47 +356,72 @@ local VaultHunter = {
 
 }
 
-function InventoryList.VaultHunter()
+function InventoryList.VaultHunter(char_name)
+  local tblReport = {{"Item", "Who has it?", "On Hand (Req'd)"}}
+  
+  local InventorySearchTable = InventoryList.Items
+  if char_name and char_name ~= "" and InventoryList.Items[string.lower(char_name):gsub("^%l", string.upper)] then
+    InventorySearchTable = InventoryList.Items[string.lower(char_name):gsub("^%l", string.upper)]
+  else
+    char_name = nil
+  end
+    
 
-  
-  tblReport = {{"Item", "On Hand (Req'd)"}}
-  
-  for item_name,num_reqd in pairs(VaultHunter) do
-    local x = InventoryList.ItemsOnHand(item_name) .. " (" .. num_reqd .. ")"
-    if InventoryList.ItemsOnHand(item_name) >= num_reqd then
+  for item_name, num_reqd in pairs(VaultHunter) do
+    local itemsReport = InventoryList.Search(InventorySearchTable, item_name)
+    local x = #itemsReport .. " (" .. num_reqd .. ")"
+
+    -- Determine the color based on the required amount
+    if #itemsReport  >= num_reqd then
       x = "    <green>" .. x
     else
       x = "    <yellow>" .. x
     end
-    table.insert(tblReport, {item_name, x})
+
+    if #itemsReport > 0 then
+      table.insert(tblReport, {item_name, (char_name and string.lower(char_name):gsub("^%l", string.upper) or itemsReport[1][1]), x})  -- Report the first character who has the item
+    else
+      table.insert(tblReport, {item_name, "", x})  -- No character has it
+    end
   end
-  
-  AltList.FormatReportTwoCol("Vault Hunter Report", tblReport, 0)
+
+  -- Call FormatReportXCol with appropriate arguments, using nil for color
+  AltList.FormatReportXCol(3, {-35, -20, -20}, "Vault Hunter Report", tblReport, nil)
 end
 
 function InventoryList.ThiefHunter()
   local ThiefHunter = {
-  ["glazed gith hide"] = 1,
-  ["soft nubuc hide"] = 1,
-  ["embossed hide"] = 1,
-  ["whole hide of a merman"] = 1,
-  ["hide of an unlucky human"] = 1  
+    ["glazed gith hide"] = 1,
+    ["soft nubuc hide"] = 1,
+    ["embossed hide"] = 1,
+    ["whole hide of a merman"] = 1,
+    ["hide of an unlucky human"] = 1  
   }
   
-  tblReport = {{"Item", "On Hand (Req'd)"}}
-  
-  for item_name,num_reqd in pairs(ThiefHunter) do
-    local x = InventoryList.ItemsOnHand(item_name) .. " (" .. num_reqd .. ")"
-    if InventoryList.ItemsOnHand(item_name) >= num_reqd then
+  local tblReport = {{"Item", "Who has it?", "On Hand (Req'd)"}}
+
+  for item_name, num_reqd in pairs(ThiefHunter) do
+    local itemsReport = InventoryList.Search(InventoryList.Items, item_name)
+    local x = #itemsReport .. " (" .. num_reqd .. ")"
+    
+    -- Determine the color based on the required amount
+    if #itemsReport >= num_reqd then
       x = "    <green>" .. x
     else
       x = "    <yellow>" .. x
     end
-    table.insert(tblReport, {item_name, x})
+    
+    if itemsReport and #itemsReport > 0 then
+      table.insert(tblReport, {item_name, itemsReport[1][1], x})
+    else
+      table.insert(tblReport, {item_name, "", x})
+    end
   end
-  
-  AltList.FormatReportTwoCol("Thief Hunter Report", tblReport, 0)
+
+  -- Call FormatReportXCol with appropriate arguments, using nil for color
+  AltList.FormatReportXCol(3, {-30, -20, -20}, "Thief Hunter Report", tblReport)
 end
+
 
 function moveItemsBetweenBags(BagOne, BagTwo)
     local BagOne = BagOne or "2.vault"
@@ -403,8 +429,8 @@ function moveItemsBetweenBags(BagOne, BagTwo)
 
     local function moveItem(item, quantity)
         for i = 1, quantity do
-            send("get " .. item .. " " .. BagOne)
-            send("put " .. item .. " " .. BagTwo)
+            send("get '" .. item .. "' " .. BagOne)
+            send("put '" .. item .. "' " .. BagTwo)
         end
     end
 
@@ -417,7 +443,9 @@ function moveItemsBetweenBags(BagOne, BagTwo)
         elseif item_name == "Amulet of Guiding Wind" then
             keyword = "guiding"
         elseif item_name == "Amulet of the Cat's Eye" then
-            keyword = "cat"
+            keyword = "cat eye"
+        elseif item_name == "Silver Iguana" then
+            keyword = "silver iguana"
         else
             keyword = string.lower(item_name:match("^([^%s']+)'?"))
         end
@@ -444,10 +472,46 @@ function turnInTreasureHunter()
   
         for i = 1, quantity do
           send("give " .. keyword .. " demon")
-          wait(5)
+          wait(5.5)
         end
     end
 
   end)()
 end
 
+function splitArgumentIntoTwo(input)
+    local arg1, arg2
+
+    -- Check for both "words" enclosed in single quotes
+    local match1, match2 = input:match("^'(.-)'%s+'(.-)'$")
+    if match1 and match2 then
+        arg1 = "'" .. match1 .. "'"
+        arg2 = "'" .. match2 .. "'"
+    else
+        -- Check for the pattern with the first "word" in single quotes
+        match1, match2 = input:match("^'(.-)'%s+(%S+)$")
+        if match1 and match2 then
+            arg1 = "'" .. match1 .. "'"
+            arg2 = match2
+        else
+            -- Check for the pattern with the second "word" in single quotes
+            match1, match2 = input:match("^(%S+)%s+'(.-)'$")
+            if match1 and match2 then
+                arg1 = match1
+                arg2 = "'" .. match2 .. "'"
+            else
+                -- Check for the pattern with exactly two words
+                match1, match2 = input:match("^(%S+)%s+(%S+)$")
+                if match1 and match2 then
+                    arg1 = match1
+                    arg2 = match2
+                else
+                    -- Return an error if neither pattern matches
+                    return nil, "Invalid input format. Use two words or enclose multiple words in single quotes."
+                end
+            end
+        end
+    end
+
+    return arg1, arg2
+end

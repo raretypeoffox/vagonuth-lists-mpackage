@@ -87,6 +87,8 @@ function AltList.PlayerExists(char_name)
     AltList.Chars[char_name].SubLevel = 0
     AltList.Chars[char_name].Max_HP = 0
     AltList.Chars[char_name].Max_MP = 0
+    AltList.Chars[char_name].Current_HP = 0
+    AltList.Chars[char_name].Current_MP = 0
     AltList.Chars[char_name].HitRoll = 0
     AltList.Chars[char_name].DamRoll= 0
     AltList.Chars[char_name].ArmorClass = 0
@@ -112,12 +114,18 @@ function AltList.PlayerExists(char_name)
 end
 
 function AltList.UpdateVitals(char_name)
+    -- prevent AltList.UpdateInsigs from overwriting Lord insigs with Legend insigs
+    if gmcp.Char and gmcp.Char.Status and gmcp.Char.Status.level and tonumber(gmcp.Char.Status.level) > 125 then
+      return
+    end
     AltList.Chars[char_name].Race = gmcp.Char.Status.race
     AltList.Chars[char_name].Class = gmcp.Char.Status.class
     AltList.Chars[char_name].Level = tonumber(gmcp.Char.Status.level)
     AltList.Chars[char_name].SubLevel = tonumber(gmcp.Char.Status.sublevel)
     AltList.Chars[char_name].Max_HP = tonumber(gmcp.Char.Vitals.maxhp)
     AltList.Chars[char_name].Max_MP = (gmcp.Char.Vitals.maxmp == nil or gmcp.Char.Vitals.maxmp == "0") and 0 or tonumber(gmcp.Char.Vitals.maxmp)
+    AltList.Chars[char_name].Current_HP = tonumber(gmcp.Char.Vitals.hp)
+    AltList.Chars[char_name].Current_MP = (gmcp.Char.Vitals.maxmp == nil or gmcp.Char.Vitals.maxmp == "0") and 0 or tonumber(gmcp.Char.Vitals.mp)
     AltList.Chars[char_name].HitRoll = tonumber(gmcp.Char.Status.hitroll)
     AltList.Chars[char_name].DamRoll = tonumber(gmcp.Char.Status.damroll)
     AltList.Chars[char_name].ArmorClass = tonumber(gmcp.Char.Status.ac) or 0
@@ -127,6 +135,7 @@ function AltList.UpdateVitals(char_name)
     AltList.Chars[char_name].MaxWeight = tonumber(gmcp.Char.Vitals.maxwgt)
     AltList.Save()
 end
+
 
 function AltList.UpdateGold(gold)
   local char_name = AltList.GetCharName()
@@ -142,14 +151,19 @@ function AltList.UpdatePracs(pracs)
   AltList.Save()
 end
 
-function AltList.UpdateQP(QP)
-  local char_name = AltList.GetCharName()
+function AltList.UpdateQP(QP, char_name)
+  local char_name = char_name or AltList.GetCharName()
   AltList.PlayerExists(char_name)
   AltList.Chars[char_name].QP = tonumber(QP)
   AltList.Save()
 end
 
 function AltList.UpdateInsigs(tbl_Insigs)
+  -- prevent AltList.UpdateInsigs from overwriting Lord insigs with Legend insigs
+  if gmcp.Char and gmcp.Char.Status and gmcp.Char.Status.level and tonumber(gmcp.Char.Status.level) > 125 then
+    return
+  end
+
   local char_name = AltList.GetCharName()
   AltList.PlayerExists(char_name)  
   
@@ -268,67 +282,89 @@ function AltList.AllegUpdateAll()
     AltList.Save()
 end
 
-function AltList.FormatReportTwoCol(title, tblReport, total)
-  if type(title) ~= "string" or type(tblReport) ~= "table" then
-    error("showCmdSyntax: Invalid inputs (expected string, table)")
-    return false
-  end
-  
-  local formatStr
-
-  if #tblReport == 0 then error("tblReport is empty"); return end
-
-  local line_break = "<white>-----------------------------------------\n"
-  cecho("<white>"..title.."\n")
-  cecho(line_break)
-  cecho(string.format("<white>%-30s%10s\n", tblReport[1][1], tblReport[1][2]))
-  table.remove(tblReport,1)
-  cecho(line_break)
-  for _, v in ipairs(tblReport) do
-    if type(v[2]) == "number" then v[2] = format_int(v[2]) end
-    if v[1] == AltList.GetCharName() then
-        formatStr = string.format("<%s>%-30s%10s\n", "yellow", v[1], v[2])
-    else
-        formatStr = string.format("<%s>%-30s%10s\n", "white", v[1], v[2])
-    end
-    cecho(formatStr)
-  end
-  cecho(line_break)
-  if total and total > 0 then
-    cecho(string.format("<white>%-30s%10s\n", "Total: ", format_int(total)))
-    cecho(line_break)
+-- Define a helper function to use the appropriate unpack function based on Lua version
+function AltList.SafeUnpack(tbl)
+  if table.unpack then
+    return table.unpack(tbl) -- Lua 5.2 and later
+  else
+    return unpack(tbl) -- Lua 5.1 (older versions)
   end
 end
 
-function AltList.FormatReportThreeCol(title, tblReport, showCmdColour)
-  if type(title) ~= "string" or type(tblReport) ~= "table" then
-    error("showCmdSyntax: Invalid inputs (expected string, table)")
+
+function AltList.FormatReportXCol(num_of_columns, tblColSizes, title, tblReport, showCmdColour, totalReport)
+  if type(title) ~= "string" or type(tblReport) ~= "table" or type(tblColSizes) ~= "table" or type(num_of_columns) ~= "number" then
+    error("Invalid inputs (expected string, number, table, table)")
     return false
   end
 
-  if #tblReport == 0 then error("tblReport is empty"); return end
-  
-  showCmdColour = showCmdColour or "white" -- https://wiki.mudlet.org/images/c/c3/ShowColors.png
-  
-  cecho("<"..showCmdColour..">"..title.."\n")
-  cecho("<"..showCmdColour..">---------------------------------------------------------------------------------------\n")
-  cecho(string.format("<%s>%-30s%-30s%s\n", showCmdColour, tblReport[1][1], tblReport[1][2], tblReport[1][3]))
-  table.remove(tblReport,1)
-  cecho("<"..showCmdColour..">---------------------------------------------------------------------------------------\n")
-  for _, v in ipairs(tblReport) do
-    local formatStr
-    --if string.sub(v[2],1,1) == "*" then v[2] = "<yellow>" .. v[2] .. "<white>" end
-    if v[1] == AltList.GetCharName() then
-        formatStr = string.format("<%s>%-30s%-30s%s\n", "yellow", v[1], v[2], v[3])
-    else
-        formatStr = string.format("<%s>%-30s%-30s%s\n", showCmdColour, v[1], v[2], v[3])
-    end
-    cecho(formatStr)
+  if #tblReport == 0 then
+    error("tblReport is empty")
+    return
   end
-  cecho("<"..showCmdColour..">---------------------------------------------------------------------------------------\n")
+
+  -- Validate that the number of column sizes matches the number of columns
+  if #tblColSizes ~= num_of_columns then
+    error("The number of column sizes does not match the specified number of columns")
+    return false
+  end
+  
+  local totalColSize = 0
+
+  -- Construct the format string dynamically based on the column sizes
+  local lineFormat = "<%s>"
+  for i = 1, num_of_columns do
+    lineFormat = lineFormat .. "%" .. tblColSizes[i] .. "s"
+    tblColSizes[i] = math.abs(tblColSizes[i])
+    totalColSize = totalColSize + tblColSizes[i]
+  end
+  lineFormat = lineFormat .. "\n"
+
+  local lineColour = showCmdColour or "white"
+
+  -- Print the title and separator line
+  cecho("<" .. lineColour .. ">" .. title .. "\n")
+  cecho("<" .. lineColour .. ">" .. string.rep("-", totalColSize) .. "\n")
+
+  -- Print the report's header (assumes first entry is header row)
+  local headerRow = tblReport[1]
+  local headerArgs = {}
+  for i = 1, num_of_columns do
+    headerArgs[#headerArgs + 1] = headerRow[i] or ""
+  end
+  cecho(string.format(lineFormat, lineColour, AltList.SafeUnpack(headerArgs)))
+  table.remove(tblReport, 1)
+  cecho("<" .. lineColour .. ">" .. string.rep("-", totalColSize) .. "\n")
+
+  -- Print each row in the report
+  for _, row in ipairs(tblReport) do
+    if row[1] == AltList.GetCharName() then
+      lineColour = "yellow"
+    else
+      lineColour = showCmdColour or "white"
+    end
+
+    -- Prepare the values for each row
+    local rowArgs = {}
+    for i = 1, num_of_columns do
+      rowArgs[#rowArgs + 1] = string.sub(row[i] or "", 1, tblColSizes[i] - 1)
+    end
+
+    cecho(string.format(lineFormat, lineColour, AltList.SafeUnpack(rowArgs)))
+  end
+  
+  lineColour = showCmdColour or "white"
+  
+  if totalReport then
+    cecho("<" .. lineColour .. ">" .. string.rep("-", totalColSize) .. "\n")
+    cecho(string.format("<%s>%-" .. (totalColSize - tblColSizes[#tblColSizes]) .. "s%" .. tblColSizes[#tblColSizes] .. "s\n", lineColour, "Total:", format_int(totalReport)))
+  end
+
+  -- Print the final separator line
+  cecho("<" .. lineColour .. ">" .. string.rep("-", totalColSize) .. "\n")
 end
 
-local function AllegTableSort(a, b)
+function AllegTableSort(a, b)
     -- Custom order for sorting
     local order = {"Task Master", "Feat Finisher", "Goto Guy/Gal/Person", "Deed Doer", "Busybody", "Scratcher", ""}
 
@@ -351,6 +387,7 @@ local function AllegTableSort(a, b)
 end
 
 function AltList.ReportAlleg()
+  local debug_timer = os.clock()
   AltList.AllegUpdateAll()
   
   local Available = {}
@@ -359,7 +396,7 @@ function AltList.ReportAlleg()
   local TwoDays = {}
   
   for char_name,_ in pairs(AltList.Chars) do
-    if AltList.Chars[char_name].Level == 125 then 
+    if AltList.Chars[char_name].Level >= 125 then 
       if AltList.Chars[char_name].Alleg.Request == "Available" then 
         table.insert(Available, char_name)
       elseif AltList.Chars[char_name].Alleg.Cleared then
@@ -372,10 +409,14 @@ function AltList.ReportAlleg()
           table.insert(Tomorrow, char_name)
         end
       elseif AltList.Chars[char_name].Alleg.Request ~= "" then
-        --table.insert(Request, {char_name, AltList.Chars[char_name].Alleg.Request})
         table.insert(Request, char_name)      
       end
-    end -- end of Level == 125 check
+    end
+  end
+  
+  if #Request == 0 and #Available == 0 and #Tomorrow == 0 and #TwoDays == 0 then
+    print("No Alleg Report available")
+    return
   end
   
   table.sort(Available, AllegTableSort)
@@ -383,83 +424,108 @@ function AltList.ReportAlleg()
   table.sort(TwoDays, AllegTableSort)
   table.sort(Request, AllegTableSort)
   
-  
-  if #Request == 0 and #Available == 0 and #Tomorrow == 0 and #TwoDays == 0 then
-    print("No Alleg Report available")
-    return
-  end
-  
   local tblAllegReport = {}
-  local footnote = false
   
-  table.insert(tblAllegReport, {"Character", "Alleg Item/Status", "Insignia"}) 
-  
-  if #Available > 0 then
-    for _,y in pairs(Available) do
-      table.insert(tblAllegReport, {y, "Available", AltList.Chars[y].Alleg.Insig})
-      --table.sort(tblAllegReport, AllegTableSort)
-    end
-  end
-  
-  
+  table.insert(tblAllegReport, {"Character", "Alleg Item/Status", "Who has it? (Ttl)", "Insignia"}) 
+
   if #Request > 0 then
     for _,y in pairs(Request) do
       local item_name = AltList.Chars[y].Alleg.Request
+      local item_report = InventoryList.Search(InventoryList.Items, item_name) -- note: adds about 0.25s to processing time when player has 24 items o/s
       if InventoryList.HaveItem(item_name) then
-        item_name = "*" .. AltList.Chars[y].Alleg.Request 
-        footnote = true
+        table.insert(tblAllegReport, {y, item_name, item_report[1][1] .. " (" .. #item_report .. ")" , AltList.Chars[y].Alleg.Insig})
+      else
+        table.insert(tblAllegReport, {y, item_name, "", AltList.Chars[y].Alleg.Insig})
       end
-      table.insert(tblAllegReport, {y, string.sub(item_name,1, 25), AltList.Chars[y].Alleg.Insig}) --only use first 25 characters of item name to maintain cols
     end
   end
-  
-
+  if #Available > 0 then
+    for _,y in pairs(Available) do
+      table.insert(tblAllegReport, {y, "Available", "", AltList.Chars[y].Alleg.Insig})
+    end
+  end
   if #Tomorrow > 0 then
     for _,y in pairs(Tomorrow) do
-      table.insert(tblAllegReport, {y, "Tomorrow " .. (AltList.Chars[y].Alleg.Cleared and "(Cleared)" or "(Give Up)"), AltList.Chars[y].Alleg.Insig})
+      table.insert(tblAllegReport, {y, "Tomorrow " .. (AltList.Chars[y].Alleg.Cleared and "(Cleared)" or "(Give Up)"), "", AltList.Chars[y].Alleg.Insig})
     end
   end
   if #TwoDays > 0 then
     for _,y in pairs(TwoDays) do
-      table.insert(tblAllegReport, {y, "Two Days (Give Up)",AltList.Chars[y].Alleg.Insig})
+      table.insert(tblAllegReport, {y, "Two Days (Give Up)", "", AltList.Chars[y].Alleg.Insig})
     end
   end
   
-  AltList.FormatReportThreeCol("Alleg Report", tblAllegReport)
-
-  if footnote then cecho("<yellow>* <white>item available on character or alt, try isearch <item_name>\n") end
+  AltList.FormatReportXCol(4, {-20, -35, -20, -20}, "Alleg Report", tblAllegReport)
+  if #Available > 0 then cecho("<white>" .. #Available .. " alts available to turn in rubies\n") end
+    if GlobalVar.Debug then
+    printMessage("DEBUG", string.format("AltList.ReportAlleg() ran in %.2f seconds (with %d items)\n", (os.clock() - debug_timer), #Request))
+  end
   
+end
+
+function AltList.ReportNextAvailableAlleg()
+  AltList.AllegUpdateAll()
+  
+  local Available = {}
+  
+  for char_name,_ in pairs(AltList.Chars) do
+    if AltList.Chars[char_name].Level == 125 and AltList.Chars[char_name].Alleg.Request == "Available" and char_name ~= AltList.GetCharName() then 
+        table.insert(Available, char_name)
+    end
+  end
+  
+  table.sort(Available, AllegTableSort)
+
+  if #Available == 0 then
+    printMessage("Alleg", "Completed on all characters", "yellow", "white")
+  else
+    printMessage("Alleg", "Next available character: " .. Available[1], "yellow", "white")
+  end
 end
 
 function AltList.ReportGold()
   local tblCharReport = {}
   local totalGold = 0
-  for char_name,_ in pairs(AltList.Chars) do
+  
+  -- Collect characters with gold and sum up the total
+  for char_name, _ in pairs(AltList.Chars) do
     if AltList.Chars[char_name].Gold > 0 then
       table.insert(tblCharReport, {char_name, AltList.Chars[char_name].Gold})
       totalGold = totalGold + AltList.Chars[char_name].Gold
     end
   end
   
-  table.sort(tblCharReport,function(a, b) return a[2] > b[2] end)
+  -- Sort characters by gold amount in descending order
+  table.sort(tblCharReport, function(a, b) return a[2] > b[2] end)
+  
+  for _,tblChar in pairs(tblCharReport) do
+    tblChar[2] = format_int(tblChar[2])
+  end
+  
+  -- Add a header row
   table.insert(tblCharReport, 1, {"Character", "Gold"})
-  AltList.FormatReportTwoCol("Gold", tblCharReport, totalGold)
+  
+  -- Call the formatting function with 2 columns, each of width 20
+  AltList.FormatReportXCol(2, {-20, 20}, "Gold Report", tblCharReport, nil, totalGold)
 end
 
 function AltList.ReportQP()
   local tblCharReport = {}
   local totalQP = 0
-  for char_name,_ in pairs(AltList.Chars) do
+
+  -- Collect characters with QP and sum up the total
+  for char_name, _ in pairs(AltList.Chars) do
     if AltList.Chars[char_name].QP > 0 then
       table.insert(tblCharReport, {char_name, AltList.Chars[char_name].QP})
       totalQP = totalQP + AltList.Chars[char_name].QP
     end
   end
-  
-  table.sort(tblCharReport,function(a, b) return a[2] > b[2] end)
+
+  -- Sort characters by QP in descending order
+  table.sort(tblCharReport, function(a, b) return a[2] > b[2] end)
   table.insert(tblCharReport, 1, {"Character/Token", "QP"})
 
-
+  -- Define the token denominations
   local QPtoken_denom = {
     {"QuestPoint Token (1QP)", 1},
     {"QuestPoint Token (2QP)", 2},
@@ -471,27 +537,68 @@ function AltList.ReportQP()
     {"QuestPoint Token (30QP)", 30},
     {"Fae Rune For 'Pain'", 5},
     {"Fae Rune For 'Insanity'", 5},
-    {"Fae Rune For 'fire'", 5},
+    {"Fae Rune For 'Fire'", 5},
     {"Fae Rune For 'Disease'", 5},
     {"Fae Rune For 'Despair'", 10},
     {"Fae Rune For 'Enslavement'", 12},
     {"Fae Rune For 'Destruction'", 12},
-    {"orderly dragon scale", 5},
-    
+    {"Orderly Dragon Scale", 5},
   }
-  
+
+  -- Collect token information and add to the report
   for _, token_tbl in pairs(QPtoken_denom) do 
     local QPtoken_name = token_tbl[1]
     local denom = token_tbl[2]
     local QPtoken = InventoryList.ItemsOnHand(QPtoken_name)
+    
     if QPtoken > 0 then
       table.insert(tblCharReport, {QPtoken_name .. " x " .. QPtoken, QPtoken * denom})
       totalQP = totalQP + QPtoken * denom
     end
-
   end
-  
-  AltList.FormatReportTwoCol("QuestPoints (QP)", tblCharReport, totalQP)
+
+  -- Call the report formatting function with 2 columns and the total QP
+  AltList.FormatReportXCol(2, {-30, 10}, "QuestPoints (QP)", tblCharReport, nil, totalQP)
+end
+
+function AltList.ReportRegen(level)
+  local tblCharReport = {}
+  local tempReport = {} -- Temporary table to store character data and missing mana percentage
+
+  assert(level > 0 and (level == 250 or level == 125 or level <= 51))
+
+  for char_name, _ in pairs(AltList.Chars) do
+    if AltList.Chars[char_name].Level == level then 
+      if AltList.Chars[char_name].Current_HP and AltList.Chars[char_name].Current_MP then
+        local current_HP = AltList.Chars[char_name].Current_HP
+        local max_HP = AltList.Chars[char_name].Max_HP
+        local current_MP = AltList.Chars[char_name].Current_MP
+        local max_MP = AltList.Chars[char_name].Max_MP
+
+        -- Check if HP or MP is less than 90%
+        if (current_HP / max_HP < 0.9 or current_MP / max_MP < 0.9) then
+          local hp_report = current_HP .. "/" .. max_HP
+          local mp_report = current_MP .. "/" .. max_MP
+          local missing_mana_percentage = (max_MP - current_MP) / max_MP
+          table.insert(tempReport, {char_name, hp_report, mp_report, missing_mana_percentage})
+        end
+      end
+    end
+  end
+
+  -- Sort tempReport in descending order of missing mana percentage
+  table.sort(tempReport, function(a, b) return a[4] > b[4] end)
+
+  -- Insert sorted data into tblCharReport
+  for _, report in ipairs(tempReport) do
+    table.insert(tblCharReport, {report[1], report[2], report[3]})
+  end
+
+  -- Add header to the report
+  table.insert(tblCharReport, 1, {"Character", "Hit Points", "Mana"})
+
+  -- Call the format function with the new format specifications
+  AltList.FormatReportXCol(3, {-20, -20, -20}, "Regen Report (Level: " .. level .. ")", tblCharReport)
 end
 
 function AltList.ReportInsig()
@@ -508,8 +615,9 @@ function AltList.ReportInsig()
   
   local TotalCount = 0
 
+  -- Count the insignias for characters at level 125
   for char_name, _ in pairs(AltList.Chars) do
-    if AltList.Chars[char_name].Level == 125 then -- exclude alts that may have remorted
+    if AltList.Chars[char_name].Level == 125 then
       for _, insig in ipairs(AltList.Chars[char_name].Insigs) do
         if InsigCount[insig] ~= nil then
           InsigCount[insig] = InsigCount[insig] + 1
@@ -523,9 +631,8 @@ function AltList.ReportInsig()
     printMessage("Insig Report", "No alts with alleg insigs are tracked. Try logging in with each alt and typing 'insig' once")
     return
   end
-  
 
-  -- Iterate over InsigCount using ipairs to maintain the order
+  -- Collect insignia counts into the report
   for _, insig in ipairs({"Scratcher", "Busybody", "Deed Doer", "Goto Guy/Gal/Person", "Feat Finisher", "Task Master"}) do
     local count = InsigCount[insig]
     if count > 0 then
@@ -533,8 +640,11 @@ function AltList.ReportInsig()
     end
   end
 
+  -- Add header to the report
   table.insert(tblCharReport, 1, {"Alleg Level", "Quantity"})
-  AltList.FormatReportTwoCol("Alleg Insig Report", tblCharReport, TotalCount)
+
+  -- Call the format function with the new format specifications
+  AltList.FormatReportXCol(2, {-20, 20}, "Alleg Insig Report", tblCharReport, nil, TotalCount)
 end
 
 function AltList.ReportInventorySpace(top_x)
@@ -547,55 +657,56 @@ function AltList.ReportInventorySpace(top_x)
     return false
   end
 
-  local tblCharReportHero = {} --  for characters Level 51
+  local tblCharReportHero = {} -- for characters Level 51
   local tblCharReportLord = {} -- for characters Level 125
-  local top_x_hero = 0
-  local top_x_lord = 0
 
   for char_name, _ in pairs(AltList.Chars) do
     local freeItems = AltList.Chars[char_name].MaxItems - AltList.Chars[char_name].Items
     local freeWeight = AltList.Chars[char_name].MaxWeight - AltList.Chars[char_name].Weight
     local level = AltList.Chars[char_name].Level
 
-    if level == 51 then table.insert(tblCharReportHero, {char_name, freeWeight, freeItems}); top_x_hero = top_x_hero + 1
-    elseif level == 125 then table.insert(tblCharReportLord, {char_name, freeWeight, freeItems}); top_x_lord = top_x_lord + 1
-    end
-    
-  end
-
-  -- sort tblCharReport based on most free weight least
-  table.sort(tblCharReportHero,function(a, b) return a[2] > b[2] end)
-  table.sort(tblCharReportLord,function(a, b) return a[2] > b[2] end)
-
-
-  -- trim tblCharReport to top_x
-  if top_x_hero > top_x then
-    for i = top_x + 1, #tblCharReportHero do
-      tblCharReportHero[i] = nil
+    if level == 51 then
+      table.insert(tblCharReportHero, {char_name, freeWeight, freeItems})
+    elseif level == 125 then
+      table.insert(tblCharReportLord, {char_name, freeWeight, freeItems})
     end
   end
 
-  -- trim tbleCharReportLord to top_x
-  if top_x_lord > top_x then
-    for i = top_x + 1, #tblCharReportLord do
-      tblCharReportLord[i] = nil
-    end
+  -- Determine if reverse sort is needed
+  local ascending = top_x < 0
+  top_x = math.abs(top_x)  -- Convert top_x to positive for sorting
+
+  -- Sort the tables based on free weight
+  table.sort(tblCharReportHero, function(a, b) return ascending and a[2] < b[2] or a[2] > b[2] end)
+  table.sort(tblCharReportLord, function(a, b) return ascending and a[2] < b[2] or a[2] > b[2] end)
+
+  -- Trim the reports to top_x
+  while #tblCharReportHero > top_x + 1 do
+    table.remove(tblCharReportHero)
   end
-  
+
+  while #tblCharReportLord > top_x + 1 do
+    table.remove(tblCharReportLord)
+  end
+
+  -- Add headers
   table.insert(tblCharReportHero, 1, {"Heroes", "Free Weight", "Free Items"})
   table.insert(tblCharReportLord, 1, {"Lords", "Free Weight", "Free Items"})
-     
+
   if #tblCharReportLord == 1 and #tblCharReportHero == 1 then
     printMessage("Inventory Space Report Error", "You have no lords or heroes on your altlist. Try logging in with your other alts first")
     return
   end
   
+  -- Print the inventory space report using the new format
   cecho("\n<white>Inventory Space Report")
-  if #tblCharReportLord > 1 then AltList.FormatReportThreeCol(" ", tblCharReportLord) end
-  if #tblCharReportHero > 1 then AltList.FormatReportThreeCol(" ", tblCharReportHero) end
-  
+  if #tblCharReportLord > 1 then
+    AltList.FormatReportXCol(3, {-20, 15, 15}, " ", tblCharReportLord) 
+  end
+  if #tblCharReportHero > 1 then
+    AltList.FormatReportXCol(3, {-20, 15, 15}, " ", tblCharReportHero) 
+  end
 end
-
 
 
 function AltList.UpdateWorship(worship, devoted)

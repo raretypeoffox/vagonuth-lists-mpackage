@@ -85,6 +85,13 @@ function printGameMessage(title, message, colour, colour_message)
   end
 end
 
+function printMessage(title, message, colour)
+  colour = colour or "white"
+  
+  local formatStr = string.format("<%s>%s<ansi_%s>: %s\n", colour, title, colour, message)
+  cecho(formatStr)
+end
+
 function Connected()
   local _, _, ret = getConnectionInfo()
   return ret

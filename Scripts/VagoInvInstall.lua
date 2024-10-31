@@ -4,7 +4,7 @@
 -- Script Code:
 -- Installed with: lua installPackage("https://github.com/raretypeoffox/vagonuth-lists-mpackage/releases/latest/download/Vagonuth-Inventory-Mgmt.mpackage")
 VagoInv = VagoInv or {}
-VagoInv.Version = "v1.0.7"
+VagoInv.Version = "v1.0.8"
 VagoInv.OnlinePath = "https://github.com/raretypeoffox/vagonuth-lists-mpackage/releases/latest/download/"
 VagoInv.OnlineVersionFile = "https://raw.githubusercontent.com/raretypeoffox/vagonuth-lists-mpackage/main/versions.lua"
 VagoInv.ProfileName = getProfileName():lower()

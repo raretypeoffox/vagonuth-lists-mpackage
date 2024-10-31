@@ -3,7 +3,7 @@
 
 
 -- Trigger Patterns:
--- 0 (start of line): Allegaagse says 'Exactly what I wanted, thank you.'
+-- 0 (start of line): Allegaagse says 'Here is something for your trouble.'
 -- 1 (start of line): Allegaagse says 'You have done such a good job that I have raised my estimation of your worth as a searcher.'
 
 -- Script Code:
@@ -19,6 +19,9 @@ if AltList.GivenAllegItem then
   AltList.AllegRecordCleared()
   send("insig", false)
   AltList.GivenAllegItem = false
+  print("\n")
+  AltList.ReportNextAvailableAlleg()
+  raiseEvent("AllegRecordCleared")
 end
 
 --Allegaagse says 'You have done such a good job that I have raised my estimation of your worth as a searcher.'

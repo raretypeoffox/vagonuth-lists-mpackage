@@ -1,23 +1,30 @@
 -- Alias: AltList Reports
 -- Attribute: isActive
 
--- Pattern: ^(?i)rep(qp|gold|alleg|vault|thief|insig|inv|locker)$
+-- Pattern: ^(?i)rep(qp|gold|alleg|vault|thief|insig|inv|invr|locker|regen)\b\s*(.*)$
 
 -- Script Code:
-if matches[2] == "qp" then
+local cmd = string.lower(matches[2])
+local args = matches[3]
+
+if cmd == "qp" then
   AltList.ReportQP()
-elseif matches[2] == "gold" then
+elseif cmd == "gold" then
   AltList.ReportGold()
-elseif matches[2] == "alleg" then
+elseif cmd == "alleg" then
   AltList.ReportAlleg()
-elseif matches[2] == "vault" then
-  InventoryList.VaultHunter()
-elseif matches[2] == "thief" then
+elseif cmd == "vault" then
+  InventoryList.VaultHunter(args)
+elseif cmd == "thief" then
   InventoryList.ThiefHunter()
-elseif matches[2] == "insig" then
+elseif cmd == "insig" then
   AltList.ReportInsig()
-elseif matches[2] == "inv" then
+elseif cmd == "inv" then
   AltList.ReportInventorySpace()
-elseif matches[2] == "locker" then
+elseif cmd == "invr" then
+  AltList.ReportInventorySpace(-5)
+elseif cmd == "locker" then
   InventoryList.ReportLockers()
+elseif cmd == "regen" then
+  AltList.ReportRegen(125)
 end

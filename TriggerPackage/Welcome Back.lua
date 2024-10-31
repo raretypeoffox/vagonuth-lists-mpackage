@@ -3,15 +3,12 @@
 
 
 -- Trigger Patterns:
--- 0 (regex): ^Welcome( back)? to the AVATAR System(, Hero|, Lord|, Lady)? (?<charname>\w+)
+-- 0 (regex): ^Welcome( back)? to the AVATAR System(, Hero|, Lord|, Lady|, Legend)? (?<charname>\w+)
 
 -- Script Code:
 AltList.LoginName = string.lower(matches.charname):gsub("^%l", string.upper)
 InventoryList.LoginName = string.lower(matches.charname):gsub("^%l", string.upper)
-
---sendGMCP("Char.Group.List")
---sendGMCP("Char.Status")
---sendGMCP("Char.Vitals")
+if GlobalVar.Debug then printMessage("Debug", "Character is " .. AltList.GetCharName()) end
 
 if AltList.TimeZone == 0 then tempTimer(5, function() send("time"); end); end
 if not AltList.Chars[AltList.LoginName] then

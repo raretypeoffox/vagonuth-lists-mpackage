@@ -1,7 +1,7 @@
 -- Alias: InventoryList Aliases
 -- Attribute: isActive
 
--- Pattern: ^(?i)(isearch|icount|isearchex|icountex|isearchlvl|icountlvl|iupdate|idownload|ihelp)\b\s*(.*)$
+-- Pattern: ^(?i)(isearch|icount|isearchex|icountex|isearchlvl|icountlvl|iupdate|idownload|ihelp|turninvault|movevault)\b\s*(.*)$
 
 -- Script Code:
 local cmd = string.lower(matches[2])
@@ -55,6 +55,19 @@ elseif cmd == "icountlvl" then
   else
     print("Syntax: icountlvl <level> <item name>\tCount every <item> in inventory list with character level)")
   end
+elseif cmd == "turninvault" then
+  turnInTreasureHunter()
+elseif cmd == "movevault" then
+  if args == "" then
+    moveItemsBetweenBags()
+  else
+    bag1, bag2 = splitArgumentIntoTwo(args)
+    if bag1 == nil then
+      print("Error: " .. bag2)
+    else
+      moveItemsBetweenBags(bag1, bag2)
+    end
+  end
 elseif cmd == "idownload" then
   VagoInv:UpdateVersion()
 
@@ -68,16 +81,20 @@ elseif cmd == "ihelp" then
     {"icountex <char> <item>", "Count every <item> in inventory list (excl. <char>)"},
     {"isearchlvl <level> <item name>", "Will search inventory list for item name held by level"},
     {"icountlvl <level> <item name>", "Count every <item> in inventory list with character level"},
-    {"repinv", "Reports your characters with the most inventory space available"},
-    {"replockers", "Reports which characters have lockers (to update: look in locker)"},
-    --{"idownload", "Downloads the latest version of the package"},
     {"",""},
+    {"repinv", "Reports your characters with the MOST inventory space available"},
+    {"repinvr", "Reports your character with the LEAST inventory space available"},
+    {"replocker", "Reports which characters have lockers (to update: look in locker)"},
+    --{"idownload", "Downloads the latest version of the package"},
     {"repgold", "Reports your total gold across all characters"},
     {"repqp", "Reports your total QP across all characters"},
     {"repalleg", "Reports your alleg status across all characters"},
     {"repinsig", "Reports a summary of your alleg insigs"},
     {"repvault", "Reports how many vault treasure hunter items you have"},
     {"repthief", "Reports how many vault thief's bane items you have"},
+    {"",""},
+    {"turninvault", "Turns in the vault items one at a time (have them in your inventory)"},
+    {"movevault <lootbag> <newbag>", "Moves one set of vault items from loot bag to new bag"},
   }
   showCmdSyntax("Inventory List Management Commands", ilist_cmds)
 else
