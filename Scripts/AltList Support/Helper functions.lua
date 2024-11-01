@@ -1,7 +1,3 @@
--- Script: Helper functions
--- Attribute: isActive
-
--- Script Code:
 function TableSize(t)
   if type(t) ~= "table" then error("TableSize() requires a table as an argument") end
   local count = 0
@@ -96,4 +92,48 @@ function Connected()
   local _, _, ret = getConnectionInfo()
   return ret
 end
+
+function splitArgumentIntoTwo(input)
+    local arg1, arg2
+
+    -- Check for both "words" enclosed in single quotes
+    local match1, match2 = input:match("^'(.-)'%s+'(.-)'$")
+    if match1 and match2 then
+        arg1 = "'" .. match1 .. "'"
+        arg2 = "'" .. match2 .. "'"
+    else
+        -- Check for the pattern with the first "word" in single quotes
+        match1, match2 = input:match("^'(.-)'%s+(%S+)$")
+        if match1 and match2 then
+            arg1 = "'" .. match1 .. "'"
+            arg2 = match2
+        else
+            -- Check for the pattern with the second "word" in single quotes
+            match1, match2 = input:match("^(%S+)%s+'(.-)'$")
+            if match1 and match2 then
+                arg1 = match1
+                arg2 = "'" .. match2 .. "'"
+            else
+                -- Check for the pattern with exactly two words
+                match1, match2 = input:match("^(%S+)%s+(%S+)$")
+                if match1 and match2 then
+                    arg1 = match1
+                    arg2 = match2
+                else
+                    -- Check for a single word
+                    match1 = input:match("^(%S+)$")
+                    if match1 then
+                        arg1 = match1
+                    else
+                        -- Return an error if no pattern matches
+                        return nil, "Invalid input format. Use one or two words, or enclose multiple words in single quotes."
+                    end
+                end
+            end
+        end
+    end
+
+    return arg1, arg2
+end
+
 

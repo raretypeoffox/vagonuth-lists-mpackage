@@ -1,9 +1,3 @@
--- Alias: InventoryList Aliases
--- Attribute: isActive
-
--- Pattern: ^(?i)(isearch|icount|isearchex|icountex|isearchlvl|icountlvl|iupdate|idownload|ihelp|turninvault|movevault)\b\s*(.*)$
-
--- Script Code:
 local cmd = string.lower(matches[2])
 local args = matches[3]
 
@@ -62,8 +56,8 @@ elseif cmd == "movevault" then
     moveItemsBetweenBags()
   else
     bag1, bag2 = splitArgumentIntoTwo(args)
-    if bag1 == nil then
-      print("Error: " .. bag2)
+    if bag1 == nil or bag2 == nil then
+      print("Error: Invalid input format. Use one or two words, or enclose multiple words in single quotes.")
     else
       moveItemsBetweenBags(bag1, bag2)
     end

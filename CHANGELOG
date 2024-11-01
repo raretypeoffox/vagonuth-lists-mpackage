@@ -21,6 +21,8 @@
 -- updated: repalleg now show who has an item and how many your have
 -- bug fix: preventing legend from overwriting lord inventory/altlist
 -- bug fix: heavy shroud keyword fixed
+-- hot fix: movebags handles arguments slightly differently
+-- hot fix: repinvr
 
 
 

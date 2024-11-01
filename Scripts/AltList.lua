@@ -1,7 +1,3 @@
--- Script: AltList
--- Attribute: isActive
-
--- Script Code:
 -- Mudlet LUA script to track alts and their stats
 -- Tracks gold, pracs, QP, insigs, and alleg turn ins
 
@@ -675,11 +671,17 @@ function AltList.ReportInventorySpace(top_x)
   -- Determine if reverse sort is needed
   local ascending = top_x < 0
   top_x = math.abs(top_x)  -- Convert top_x to positive for sorting
-
+  
   -- Sort the tables based on free weight
-  table.sort(tblCharReportHero, function(a, b) return ascending and a[2] < b[2] or a[2] > b[2] end)
-  table.sort(tblCharReportLord, function(a, b) return ascending and a[2] < b[2] or a[2] > b[2] end)
+  if ascending then 
+    table.sort(tblCharReportHero, function(a, b) return a[2] < b[2] end)
+    table.sort(tblCharReportLord, function(a, b) return a[2] < b[2] end)
+  else
+    table.sort(tblCharReportHero, function(a, b) return a[2] > b[2] end)
+    table.sort(tblCharReportLord, function(a, b) return a[2] > b[2] end)
+  end
 
+  
   -- Trim the reports to top_x
   while #tblCharReportHero > top_x + 1 do
     table.remove(tblCharReportHero)
@@ -707,7 +709,6 @@ function AltList.ReportInventorySpace(top_x)
     AltList.FormatReportXCol(3, {-20, 15, 15}, " ", tblCharReportHero) 
   end
 end
-
 
 function AltList.UpdateWorship(worship, devoted)
   local char_name = AltList.GetCharName()
